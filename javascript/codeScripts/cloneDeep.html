@@ -8,8 +8,6 @@
 
   <body>
     <script>
-      //   oldObj.b = oldObj;
-
       // 类型检查
       const getType = (val) => Object.prototype.toString.call(val).slice(8, -1);
 
@@ -22,59 +20,42 @@
         return flags;
       };
 
-      const initClone = (val) => {
-        const type = getType(val);
-        const ctor = val.constructor;
-        let newObj = null;
-        switch (type) {
-          case "Date":
-            newObj = new Date(val.getTime());
-            return newObj;
-          case "RegExp":
-            newObj = new RegExp(val.source, getRegFlags(val));
-            newObj.lastIndex = val.lastIndex;
-            return newObj;
-          case "Function":
-            return newObj;
-          default:
-            newObj = Object.create(Object.getPrototypeOf(val));
-        }
-      };
+      // 复杂类型判断
+      const isObject = (val) => typeof val !== null && typeof val === "object";
 
-      const isObject = (val) =>
-        typeof val !== null &&
-        (typeof val === "object" || typeof val === "function");
-
+      // 深拷贝
       const cloneDeep = (value, hash = new WeakMap()) => {
         if (!isObject(value)) return value;
 
         const type = getType(value);
         const ctor = value.constructor;
         let newObj = null;
+        // 初始化新值
         switch (type) {
+          case "Array":
+            newObj = [];
+            break;
           case "Date":
             newObj = new Date(value.getTime());
-            return newObj;
+            break;
           case "RegExp":
             const flags = getRegFlags(value);
             newObj = new RegExp(value.source, flags);
             newObj.lastIndex = value.lastIndex;
-            return newObj;
-          case "Function":
-            proto = Object.getPrototypeOf(parent);
-            // 利用Object.create切断原型链
-            newObj = Object.create(proto);
-            return value;
+            break;
+          // 其他类型
           default:
             newObj = Object.create(Object.getPrototypeOf(value));
         }
 
-        // // 循环引用
+        // 处理循环引用
         if (hash.has(value)) return hash.get(value);
         hash.set(value, newObj);
 
         for (let key in value) {
-          newObj[key] = cloneDeep(value[key], hash);
+          if (!value.hasOwnProperty(key)) {
+            newObj[key] = cloneDeep(value[key], hash);
+          }
         }
 
         return newObj;
@@ -84,7 +65,6 @@
       function person(pname) {
         this.name = pname;
       }
-
       const Messi = new person("Messi");
 
       function say() {
@@ -92,34 +72,15 @@
         return "hello";
       }
 
-      class Animal {
-        constructor() {
-          this.type = "anmial";
-        }
-        say() {
-          console.log(`my type is ${this.type}`);
-        }
-      }
-
-      class Dog extends Animal {
-        constructor() {
-          super();
-          this.type = "dog";
-        }
-      }
-
-      console.log(getType(Dog));
-      console.log("Dog", Dog);
-
       const oldObj = {
         a: say,
         b: new RegExp("ab+c", "i"),
         c: Messi,
         d: new Date("2020-08-15"),
-        e: Dog,
+        f: [Messi, say, new RegExp("ab+c", "i"), new Date("2020-08-15")],
       };
 
-      oldObj.f = oldObj; // 循环引用
+      oldObj.e = oldObj; // 循环引用
 
       const newObject = cloneDeep(oldObj);
 
@@ -127,10 +88,9 @@
       console.log(newObject.a());
       console.log(newObject.b.exec("abBc"));
       console.log(newObject.c.name);
+      console.log(newObject.c.constructor);
       console.log(newObject.d.getTime());
-      console.log(Dog.prototype);
-      const dog = new newObject.e();
-      dog.say();
+      console.log(newObject.f);
     </script>
   </body>
 </html>
