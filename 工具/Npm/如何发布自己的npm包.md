@@ -102,4 +102,4 @@ npm install package-name
 | 查看包信息 | npm info [package-name] |
 | 查看包的当前版本 | npm view [package-name] version |
 | 查看包的所有版本 | npm view [package-name] versions |
-|查看包安装依赖|npm ls |
+| 查看包安装依赖|npm ls |
